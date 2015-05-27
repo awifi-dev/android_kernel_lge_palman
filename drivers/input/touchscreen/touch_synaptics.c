@@ -472,7 +472,8 @@ int get_ic_info(struct synaptics_ts_data* ts, struct touch_fw_info* fw_info)
 	u8 device_status = 0;
 	u8 flash_control = 0;
 
-	read_page_description_table(ts->client);
+	if (read_page_description_table(ts->client) < 0)
+		return -EIO;
 
 	memset(fw_info, 0, sizeof(fw_info));
 
@@ -1048,6 +1049,9 @@ int synaptics_ts_ic_ctrl(struct i2c_client *client, u8 code, u16 value)
 			TOUCH_ERR_MSG("IC Reset command write fail\n");
 			return -EIO;
 		}
+
+		msleep(10);
+
 		break;
 	case IC_CTRL_CHARGER:
 		if (touch_i2c_read(client, DEVICE_CONTROL_REG, 1, &buf) < 0) {
@@ -1064,7 +1068,6 @@ int synaptics_ts_ic_ctrl(struct i2c_client *client, u8 code, u16 value)
 				TOUCH_ERR_MSG("IC Reset command write fail\n");
 				return -EIO;
 			}
-			TOUCH_INFO_MSG("CHARGER = %d\n", !!value);
 		}
 
 		break;

@@ -202,7 +202,7 @@ enum usb_vdd_value {
  */
 struct msm_otg_platform_data {
 	int *phy_init_seq;
-	int (*vbus_power)(bool on);
+	bool (*vbus_power)(bool on);
 	unsigned power_budget;
 	enum usb_mode_type mode;
 	enum otg_control_type otg_control;
@@ -328,12 +328,15 @@ struct msm_otg {
 	unsigned cur_power;
 	struct delayed_work chg_work;
 	struct delayed_work pmic_id_status_work;
+#if defined(CONFIG_USB_OTG)
+	struct delayed_work pmic_id_work;
+	struct delayed_work usb_id_sel_work;
+#endif
 	struct delayed_work check_ta_work;
 	enum usb_chg_state chg_state;
 	enum usb_chg_type chg_type;
 	unsigned dcd_time;
 	struct wake_lock wlock;
-        struct wake_lock cable_lock;
 	struct notifier_block usbdev_nb;
 	unsigned mA_port;
 	struct timer_list id_timer;
@@ -370,8 +373,6 @@ struct msm_otg {
 	u8 active_tmout;
 	struct hrtimer timer;
 	enum usb_vdd_type vdd_type;
-	struct delayed_work acok_irq_work;
-	struct delayed_work id_pin_irq_work;
 };
 
 struct msm_hsic_host_platform_data {
