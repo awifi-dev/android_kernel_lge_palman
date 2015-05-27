@@ -62,12 +62,6 @@ config TEST_POWER
 	help
 	  This driver is used for testing. It's safe to say M here.
 
-config CHARGER_SMB345
-        tristate "SMB345 battery charger driver"
-        depends on I2C
-        help
-          Say Y here to enable support for battery charging with SMB345 chips.
-
 config BATTERY_DS2760
 	tristate "DS2760 battery driver (HP iPAQ & others)"
 	depends on W1 && W1_SLAVE_DS2760
@@ -401,6 +395,12 @@ config PM8921_CHARGER
 	help
 	  Say Y here to enable support for pm8921 chip charger subdevice
 
+config PM8921_CHARGER_AICL_SELECTION
+	bool "Enable AICL enable/disable selection"
+	depends on PM8921_CHARGER
+	help
+	  Say Y here to enable AICL enable/disable selection feature
+
 config PM8XXX_CCADC
 	tristate "PM8XXX battery current adc driver"
 	depends on MFD_PM8921_CORE
@@ -459,11 +459,5 @@ config BATTERY_TEMP_CONTROL
 	help
 	  Say Y to enable battery temperature control for safty.
 	  It controls charging current depending on battery temperature.
-
-config BATTERY_ASUS_BQ27541
-	tristate "ASUS bq27541 battery driver"
-	depends on I2C
-	help
-	  Say Y here to enable support for batteries with BQ27541 chip.
 
 endif # POWER_SUPPLY

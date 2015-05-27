@@ -149,6 +149,7 @@ struct android_dev {
 	struct pm_qos_request pm_qos_req_dma;
 	struct work_struct work;
 
+	bool otg;
 	/* A list of struct android_configuration */
 	struct list_head configs;
 	int configs_num;
@@ -458,9 +459,28 @@ static ssize_t acm_transports_store(
 	return size;
 }
 
+static char acm_xport_names[32];
+static ssize_t
+acm_xport_names_store(struct device *device, struct device_attribute *attr,
+			const char *buff, size_t size)
+{
+	strlcpy(acm_xport_names, buff, sizeof(acm_xport_names));
+
+	return size;
+}
+
+static ssize_t
+acm_xport_names_show(struct device *d, struct device_attribute *a, char *buff)
+{
+	return snprintf(buff, PAGE_SIZE, "%s", acm_xport_names);
+}
+
 static DEVICE_ATTR(acm_transports, S_IWUSR, NULL, acm_transports_store);
+static DEVICE_ATTR(acm_transport_names,  S_IRUGO | S_IWUSR,
+			acm_xport_names_show, acm_xport_names_store);
 static struct device_attribute *acm_function_attributes[] = {
 		&dev_attr_acm_transports,
+		&dev_attr_acm_transport_names,
 		NULL
 };
 
@@ -473,8 +493,8 @@ static int
 acm_function_bind_config(struct android_usb_function *f,
 		struct usb_configuration *c)
 {
-	char *name;
-	char buf[32], *b;
+	char *name, *xport_name = NULL;
+	char buf[32], *b, xport_name_buf[32], *tb;
 	int err = -1, i;
 	static int acm_initialized, ports;
 
@@ -485,11 +505,16 @@ acm_function_bind_config(struct android_usb_function *f,
 	strlcpy(buf, acm_transports, sizeof(buf));
 	b = strim(buf);
 
+	strlcpy(xport_name_buf, acm_xport_names, sizeof(xport_name_buf));
+	tb = strim(xport_name_buf);
+
 	while (b) {
 		name = strsep(&b, ",");
 
 		if (name) {
-			err = acm_init_port(ports, name);
+			if (tb)
+				xport_name = strsep(&tb, ",");
+			err = acm_init_port(ports, name, xport_name);
 			if (err) {
 				pr_err("acm: Cannot open port '%s'", name);
 				goto out;
@@ -2200,6 +2225,35 @@ out:
 	return snprintf(buf, PAGE_SIZE, "%s\n", state);
 }
 
+#if defined(CONFIG_USB_OTG)
+extern int usb_id_sel_enable(int on);
+
+static ssize_t otg_show(struct device *pdev, struct device_attribute *attr, char *buf)
+{
+	struct android_dev *dev = dev_get_drvdata(pdev);
+
+	return snprintf(buf, PAGE_SIZE, "%d\n", dev->otg);
+}
+
+static ssize_t otg_store(struct device *pdev, struct device_attribute *attr, const char *buff, size_t size)
+{
+	struct android_dev *dev = dev_get_drvdata(pdev);
+	int otg = 0;
+
+	mutex_lock(&dev->mutex);
+	sscanf(buff, "%d", &otg);
+	dev->otg = otg;
+	mutex_unlock(&dev->mutex);
+
+	if(otg == 1) {
+		usb_id_sel_enable(1);		//USB_ID = HOST_ID
+	} else {
+		usb_id_sel_enable(0);		//USB_ID = DEVICE_ID
+	}
+	return size;
+}
+#endif
+
 #define DESCRIPTOR_ATTR(field, format_string)				\
 static ssize_t								\
 field ## _show(struct device *dev, struct device_attribute *attr,	\
@@ -2259,6 +2313,9 @@ static DEVICE_ATTR(pm_qos, S_IRUGO | S_IWUSR,
 static DEVICE_ATTR(state, S_IRUGO, state_show, NULL);
 static DEVICE_ATTR(remote_wakeup, S_IRUGO | S_IWUSR,
 		remote_wakeup_show, remote_wakeup_store);
+#ifdef CONFIG_USB_OTG
+static DEVICE_ATTR(otg, 0664, otg_show, otg_store);
+#endif
 
 static struct device_attribute *android_usb_attributes[] = {
 	&dev_attr_idVendor,
@@ -2275,6 +2332,9 @@ static struct device_attribute *android_usb_attributes[] = {
 	&dev_attr_pm_qos,
 	&dev_attr_state,
 	&dev_attr_remote_wakeup,
+#ifdef CONFIG_USB_OTG
+	&dev_attr_otg,
+#endif
 	NULL
 };
 

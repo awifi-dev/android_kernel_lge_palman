@@ -1787,6 +1787,7 @@ void ddl_set_default_dec_property(struct ddl_client_context *ddl)
 	decoder->client_frame_size.width  = VCD_DDL_TEST_DEFAULT_WIDTH;
 	decoder->client_frame_size.stride = VCD_DDL_TEST_DEFAULT_WIDTH;
 	decoder->client_frame_size.scan_lines = VCD_DDL_TEST_DEFAULT_HEIGHT;
+	decoder->client_input_buf_req.sz = 2 * 1024 * 1024;
 	decoder->progressive_only = 1;
 	decoder->idr_only_decoding = false;
 	decoder->output_order = VCD_DEC_ORDER_DISPLAY;
@@ -1987,6 +1988,8 @@ void ddl_set_default_encoder_buffer_req(struct ddl_encoder_data *encoder)
 		encoder->output_buf_req.min_count + 3;
 	encoder->output_buf_req.max_count    = DDL_MAX_BUFFER_COUNT;
 	encoder->output_buf_req.align	= DDL_LINEAR_BUFFER_ALIGN_BYTES;
+	if (y_cb_cr_size >= VCD_DDL_720P_YUV_BUF_SIZE)
+		y_cb_cr_size = y_cb_cr_size>>1;
 	encoder->output_buf_req.sz =
 		DDL_ALIGN(y_cb_cr_size, DDL_KILO_BYTE(4));
 	ddl_set_default_encoder_metadata_buffer_size(encoder);
@@ -2085,7 +2088,17 @@ u32 ddl_set_default_decoder_buffer_req(struct ddl_decoder_data *decoder,
 	input_buf_req->min_count = 1;
 	input_buf_req->actual_count = input_buf_req->min_count + 1;
 	input_buf_req->max_count = DDL_MAX_BUFFER_COUNT;
-	input_buf_req->sz = (1024 * 1024 * 2);
+	//input_buf_req->sz = (1024 * 1024 * 2);
+	if (decoder->client_input_buf_req.sz <= DDL_MEGA_BYTE(2)) {
+		input_buf_req->sz = DDL_MEGA_BYTE(2);
+	} else if (decoder->client_input_buf_req.sz <=
+					DDL_MEGA_BYTE(4)) {
+		input_buf_req->sz = DDL_MEGA_BYTE(4);
+	} else {
+		DDL_MSG_ERROR("Setting incorrect input buffer size = %d",
+			decoder->client_input_buf_req.sz);
+		return false;
+	}
 	input_buf_req->align = DDL_LINEAR_BUFFER_ALIGN_BYTES;
 	decoder->min_input_buf_req = *input_buf_req;
 	if (frame_height_actual && frame_size->height > MDP_MIN_TILE_HEIGHT) {

@@ -64,18 +64,6 @@ struct msm_camera_device_platform_data {
 	uint8_t is_vpe;
 	struct msm_bus_scale_pdata *cam_bus_scale_table;
 };
-enum msm_camera_csi_data_format {
-	CSI_8BIT,
-	CSI_10BIT,
-	CSI_12BIT,
-};
-struct msm_camera_csi_params {
-	enum msm_camera_csi_data_format data_format;
-	uint8_t lane_cnt;
-	uint8_t lane_assign;
-	uint8_t settle_cnt;
-	uint8_t dpcm_scheme;
-};
 
 #ifdef CONFIG_SENSORS_MT9T013
 struct msm_camera_legacy_device_platform_data {
@@ -186,8 +174,10 @@ struct msm_gpio_set_tbl {
 	uint32_t delay;
 };
 
-struct msm_camera_gpio_num_info {
-	uint16_t gpio_num[2];
+struct msm_camera_csi_lane_params {
+	uint16_t csi_lane_assign;
+	uint16_t csi_lane_mask;
+	uint8_t csi_phy_sel;
 };
 
 struct msm_camera_gpio_conf {
@@ -204,7 +194,6 @@ struct msm_camera_gpio_conf {
 	uint8_t camera_off_table_size;
 	uint32_t *camera_on_table;
 	uint8_t camera_on_table_size;
-	struct msm_camera_gpio_num_info *gpio_num_info;
 };
 
 enum msm_camera_i2c_mux_mode {
@@ -217,6 +206,13 @@ struct msm_camera_i2c_conf {
 	uint8_t use_i2c_mux;
 	struct platform_device *mux_dev;
 	enum msm_camera_i2c_mux_mode i2c_mux_mode;
+};
+
+enum msm_camera_vreg_name_t {
+	CAM_VDIG,
+	CAM_VIO,
+	CAM_VANA,
+	CAM_VAF,
 };
 
 struct msm_camera_sensor_platform_info {
@@ -273,7 +269,6 @@ struct msm_camera_sensor_info {
 	uint8_t num_resources;
 	struct msm_camera_sensor_flash_data *flash_data;
 	int csi_if;
-	struct msm_camera_csi_params csi_params;
 	struct msm_camera_sensor_strobe_flash_data *strobe_flash_data;
 	char *eeprom_data;
 	enum msm_camera_type camera_type;
@@ -281,7 +276,6 @@ struct msm_camera_sensor_info {
 	struct msm_actuator_info *actuator_info;
 	int pmic_gpio_enable;
 	struct msm_eeprom_info *eeprom_info;
-	char vendor_name[32];
 };
 
 struct msm_camera_board_info {
@@ -393,7 +387,7 @@ struct msm_panel_common_pdata {
 	int (*vga_switch)(int select_vga);
 	int *gpio_num;
 	u32 mdp_max_clk;
-	u32 mdp_max_bw;
+	u64 mdp_max_bw;
 	u32 mdp_bw_ab_factor;
 	u32 mdp_bw_ib_factor;
 #ifdef CONFIG_MSM_BUS_SCALING
@@ -406,6 +400,11 @@ struct msm_panel_common_pdata {
 	ssize_t power_on_set_size_1;
 	ssize_t power_on_set_size_2;
 	ssize_t power_on_set_size_3;
+#if defined(CONFIG_LGIT_VIDEO_WUXGA_CABC)
+	void *power_on_set_3_noCABC;
+	ssize_t power_on_set_size_3_noCABC;
+	bool cabc_off;
+#endif
 	void *power_off_set_1;
 	void *power_off_set_2;
 	ssize_t power_off_set_size_1;
@@ -474,8 +473,6 @@ struct mipi_dsi_panel_platform_data {
 	int fpga_ctrl_mode;
 	int fpga_3d_config_addr;
 	int *gpio;
-	int recovery_backlight;
-	int set_recovery_bl_done;
 	struct mipi_dsi_phy_ctrl *phy_ctrl_settings;
 	char dlane_swap;
 	void (*dsi_pwm_cfg)(void);
