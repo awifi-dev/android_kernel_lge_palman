@@ -21,7 +21,7 @@
 #ifdef CONFIG_SLIMPORT_ANX7808
 #include <linux/platform_data/slimport_device.h>
 #endif
-#include "board-palman.h"
+#include "board-awifi.h"
 #ifdef CONFIG_ANDROID_IRRC
 #include <linux/android_irrc.h>
 #endif
@@ -166,7 +166,7 @@ static void __init lge_add_i2c_anx7808_device(void)
 #define KEY_COVER_SWITCH       0  // KEY_RESERVED
 #define GPIO_KEY_COVER_SWITCH  7
 
-static struct gpio_keys_button palman_keys[] = {
+static struct gpio_keys_button awifi_keys[] = {
 	{
 		.code       = KEY_COVER_SWITCH,
 		.gpio       = GPIO_KEY_COVER_SWITCH,
@@ -178,16 +178,16 @@ static struct gpio_keys_button palman_keys[] = {
 	},
 };
 
-static struct gpio_keys_platform_data palman_keys_data = {
-	.buttons        = palman_keys,
-	.nbuttons       = ARRAY_SIZE(palman_keys),
+static struct gpio_keys_platform_data awifi_keys_data = {
+	.buttons        = awifi_keys,
+	.nbuttons       = ARRAY_SIZE(awifi_keys),
 };
 
-static struct platform_device palman_kp_pdev = {
+static struct platform_device awifi_kp_pdev = {
 	.name           = "gpio-keys",
 	.id             = -1,
 	.dev            = {
-		.platform_data = &palman_keys_data,
+		.platform_data = &awifi_keys_data,
 	},
 };
 
@@ -222,7 +222,7 @@ static struct platform_device android_irrc_device = {
 #endif
 
 static struct platform_device *misc_devices[] __initdata = {
-	&palman_kp_pdev,
+	&awifi_kp_pdev,
 };
 
 void __init apq8064_init_misc(void)

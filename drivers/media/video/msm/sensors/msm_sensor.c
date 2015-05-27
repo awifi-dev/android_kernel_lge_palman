@@ -20,7 +20,7 @@
 /*                                                      */
 #if defined(CONFIG_S5K4E5YA)
 #include <linux/mfd/pm8xxx/pm8921.h>
-#include "../../../../../arch/arm/mach-msm/lge/palman/board-palman.h"
+#include "../../../../../arch/arm/mach-msm/lge/awifi/board-awifi.h"
 #include <mach/board_lge.h>
 #define MSM_MAINCAM_RST_EN PM8921_GPIO_PM_TO_SYS(27)	//REAR_CAM_RST_N
 #define CAMERA_DEBUG 1
@@ -1496,7 +1496,7 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	pr_err( " %s : E sensor name is %s \n",__func__, s_ctrl->sensordata->sensor_name);
 
 /*                                                      */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	rc = gpio_request(MSM_MAINCAM_RST_EN, "MAIN_CAM_RST_EN");
 	if (rc) {
 		LDBGE("%s: PM request gpio failed\n", __func__);
@@ -1544,7 +1544,7 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	}
 
 /*                                                      */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	msleep(1);
 	rc = gpio_direction_output(MSM_MAINCAM_RST_EN, 1);
 	msleep(1);
@@ -1571,7 +1571,7 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	}
 
 /*                                                      */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	pr_err("%s : mclk: %ldHz\n", __func__, s_ctrl->clk_rate);	/*                                                               */
 	usleep_range(1000, 3000);  //                                                                                                     
 #endif
@@ -1611,7 +1611,7 @@ cci_init_failed:
 			data->sensor_platform_info->i2c_conf);
 enable_clk_failed:
 	/*                                                      */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	rc = gpio_direction_output(MSM_MAINCAM_RST_EN, 0);
 #endif
 /*                                                    */
@@ -1668,7 +1668,7 @@ int32_t msm_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 			ARRAY_SIZE(cam_8974_clk_info), 0);
 
 /*                                                      */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	usleep(5);
 	LDBGI("%s: MSM_MAINCAM_RST_EN GPIO No.%d\n",__func__, MSM_MAINCAM_RST_EN);
 	gpio_direction_output(MSM_MAINCAM_RST_EN, 0 );
@@ -1695,7 +1695,7 @@ int32_t msm_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 	s_ctrl->reg_ptr = NULL;
 
 /*                                                      */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	gpio_free(MSM_MAINCAM_RST_EN);
 #endif
 /*                                                    */

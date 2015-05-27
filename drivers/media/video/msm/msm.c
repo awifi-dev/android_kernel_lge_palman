@@ -961,7 +961,7 @@ static int msm_open(struct file *f)
 		}
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 		pmctl->client = msm_camera_v4l2_get_ion_client(pcam);
 		if(pmctl->client != NULL)
 			ion_client_created = 1;
@@ -1028,7 +1028,7 @@ msm_send_open_server_failed:
 mctl_open_failed:
 	if (pcam->use_count == 1) {
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 		if(ion_client_created == 1)
 			msm_camera_v4l2_put_ion_client(pcam);
 #else
@@ -1187,7 +1187,7 @@ static int msm_close(struct file *f)
 
 	if (pcam->use_count == 0) {
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 		msm_camera_v4l2_put_ion_client(pcam);
 #endif
@@ -1203,7 +1203,7 @@ static int msm_close(struct file *f)
 			pmctl->mctl_release(pmctl);
     		pmctl->mctl_release = NULL;
 
-#if !defined(CONFIG_MACH_APQ8064_PALMAN)
+#if !defined(CONFIG_MACH_APQ8064_AWIFI)
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 		kref_put(&pmctl->refcount, msm_release_ion_client);
 #endif
@@ -1497,7 +1497,7 @@ probe_fail:
 }
 
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 void msm_camera_v4l2_release_ion_client(struct kref *ref)
 {
@@ -1650,7 +1650,7 @@ int msm_sensor_register(struct v4l2_subdev *sensor_sd)
 
 	pcam->vnode_id = vnode_count++;
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
     spin_lock_init(&pcam->ion_lock);
 #endif

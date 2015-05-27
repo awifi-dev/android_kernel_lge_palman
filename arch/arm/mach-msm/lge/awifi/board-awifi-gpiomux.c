@@ -24,7 +24,7 @@
 #include <mach/gpiomux.h>
 #include <mach/socinfo.h>
 #include "devices.h"
-#include "board-palman.h"
+#include "board-awifi.h"
 
 #include <mach/board_lge.h>
 

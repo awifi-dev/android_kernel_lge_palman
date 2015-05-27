@@ -1315,7 +1315,7 @@ void usb_hnp_polling_work(struct work_struct *work)
 		goto reschedule;
 
 start_hnp:
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 	unbind_no_pm_drivers_interfaces(udev);
 #else
 	do_unbind_rebind(udev, DO_UNBIND);

@@ -593,7 +593,7 @@ static struct i2c_board_info atmel_mxt1188S_i2c_bdinfo[] __initdata = {
 		.platform_data = &touch_mxt1188S_pdata,
 	},
 };
-void __init apq8064_palman_init_input(void)
+void __init apq8064_awifi_init_input(void)
 {
 	i2c_register_board_info(APQ8064_GSBI3_QUP_I2C_BUS_ID,
 			&atmel_mxt1188S_i2c_bdinfo[0], 1);

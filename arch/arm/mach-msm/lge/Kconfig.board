@@ -4,8 +4,8 @@
 # MAKO
 source "arch/arm/mach-msm/lge/mako/Kconfig"
 
-# PALMAN
-source "arch/arm/mach-msm/lge/palman/Kconfig"
+# AWIFI
+source "arch/arm/mach-msm/lge/awifi/Kconfig"
 
 config MACH_LGE_DUMMY
 	bool "NONE (No device)"

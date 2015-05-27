@@ -227,8 +227,8 @@ int lm3559_flash_set_led_state(int led_state)
 {
 	int err = 0;
 
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
-    pr_err("%s: flash is not available on palman\n", __func__);
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
+    pr_err("%s: flash is not available on awifi\n", __func__);
 #else
 	pr_info("%s: led_state = %d\n", __func__, led_state);
 
@@ -264,8 +264,8 @@ EXPORT_SYMBOL(lm3559_flash_set_led_state);
 static void lm3559_flash_led_set(struct led_classdev *led_cdev,
 	enum led_brightness value)
 {
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
-    pr_err("%s: flash is not available on palman\n", __func__);
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
+    pr_err("%s: flash is not available on awifi\n", __func__);
 #else
 	pr_info("%s: led_cdev->brightness[%d]\n", __func__, value);
 

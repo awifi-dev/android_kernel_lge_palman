@@ -13,7 +13,7 @@
  */
 
 #include <linux/regulator/pm8xxx-regulator.h>
-#include "board-palman.h"
+#include "board-awifi.h"
 
 #define VREG_CONSUMERS(_id) \
 	static struct regulator_consumer_supply vreg_consumers_##_id[]
@@ -554,7 +554,7 @@ apq8064_gpio_regulator_pdata[] __devinitdata = {
 	GPIO_VREG(EXT_MPP8, "ext_mpp8", "ext_mpp8_en",
 			PM8921_MPP_PM_TO_SYS(8), NULL),
 #endif
-#ifndef CONFIG_MACH_APQ8064_PALMAN
+#ifndef CONFIG_MACH_APQ8064_AWIFI
 	GPIO_VREG(EXT_3P3V, "ext_3p3v", "ext_3p3v_en",
 		  APQ8064_EXT_3P3V_REG_EN_GPIO, NULL),
 	GPIO_VREG(EXT_TS_SW, "ext_ts_sw", "ext_ts_sw_en",

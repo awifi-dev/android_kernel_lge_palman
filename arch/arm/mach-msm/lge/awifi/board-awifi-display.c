@@ -39,7 +39,7 @@
 #include <msm/mdp.h>
 
 #include "devices.h"
-#include "board-palman.h"
+#include "board-awifi.h"
 
 #ifndef LGE_DSDR_SUPPORT
 #define LGE_DSDR_SUPPORT
@@ -884,7 +884,7 @@ static struct platform_device mipi_dsi_lgit_panel_device_noCABC = {
 #endif
 #endif /* CONFIG_FB_MSM_MIPI_LGIT_VIDEO_WUXGA_PT */
 
-static struct platform_device *palman_panel_devices[] __initdata = {
+static struct platform_device *awifi_panel_devices[] __initdata = {
 #if defined(CONFIG_FB_MSM_MIPI_LGIT_VIDEO_WUXGA_PT)
 	&mipi_dsi_lgit_panel_device,
 #endif
@@ -894,7 +894,7 @@ static struct platform_device *palman_panel_devices[] __initdata = {
 };
 
 #if defined(CONFIG_LGIT_VIDEO_WUXGA_CABC)
-static struct platform_device *palman_panel_devices_noCABC[] __initdata = {
+static struct platform_device *awifi_panel_devices_noCABC[] __initdata = {
 #if defined(CONFIG_FB_MSM_MIPI_LGIT_VIDEO_WUXGA_PT)
 	&mipi_dsi_lgit_panel_device_noCABC,
 #endif
@@ -918,15 +918,15 @@ void __init apq8064_init_fb(void)
 
 #if defined(CONFIG_LGIT_VIDEO_WUXGA_CABC)
 	if (lge_board_rev > HW_REV_1_0) {
-		platform_add_devices(palman_panel_devices,
-				ARRAY_SIZE(palman_panel_devices));
+		platform_add_devices(awifi_panel_devices,
+				ARRAY_SIZE(awifi_panel_devices));
 	} else {
-		platform_add_devices(palman_panel_devices_noCABC,
-				ARRAY_SIZE(palman_panel_devices_noCABC));
+		platform_add_devices(awifi_panel_devices_noCABC,
+				ARRAY_SIZE(awifi_panel_devices_noCABC));
 	}
 #else
-	platform_add_devices(palman_panel_devices,
-			ARRAY_SIZE(palman_panel_devices));
+	platform_add_devices(awifi_panel_devices,
+			ARRAY_SIZE(awifi_panel_devices));
 #endif
 
 	msm_fb_register_device("mdp", &mdp_pdata);

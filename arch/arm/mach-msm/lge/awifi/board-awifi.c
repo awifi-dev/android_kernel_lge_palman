@@ -82,7 +82,7 @@
 #include <linux/platform_data/lge_android_usb.h>
 #endif
 #include "msm_watchdog.h"
-#include "board-palman.h"
+#include "board-awifi.h"
 #include "clock.h"
 #include "spm.h"
 #include <mach/mpm.h>
@@ -2220,11 +2220,11 @@ static void __init apq8064_cdp_init(void)
 #ifdef CONFIG_MSM_CAMERA
 	apq8064_init_cam();
 #endif
-	apq8064_palman_init_input();
+	apq8064_awifi_init_input();
 	apq8064_init_misc();
 }
 
-MACHINE_START(APQ8064_PALMAN, "QCT APQ8064 PALMAN")
+MACHINE_START(APQ8064_AWIFI, "QCT APQ8064 AWIFI")
 	.map_io = apq8064_map_io,
 	.reserve = apq8064_reserve,
 	.init_irq = apq8064_init_irq,

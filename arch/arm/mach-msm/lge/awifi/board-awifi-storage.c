@@ -24,7 +24,7 @@
 #include <mach/gpiomux.h>
 #include <mach/board_lge.h>
 #include "devices.h"
-#include "board-palman.h"
+#include "board-awifi.h"
 #include "board-storage-common-a.h"
 
 /* APQ8064 has 4 SDCC controllers */

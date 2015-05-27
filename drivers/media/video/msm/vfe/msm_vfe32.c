@@ -28,7 +28,7 @@
 #include "msm_cam_server.h"
 #include "msm_vfe32.h"
 
-#ifndef CONFIG_MACH_APQ8064_PALMAN
+#ifndef CONFIG_MACH_APQ8064_AWIFI
 //                                                      
 #define BUFFER_SIZE_10 10
 //                                                    
@@ -2113,7 +2113,7 @@ static void vfe32_send_isp_msg(
 			(void *)&isp_msg_evt);
 }
 
-#ifndef CONFIG_MACH_APQ8064_PALMAN
+#ifndef CONFIG_MACH_APQ8064_AWIFI
 //                                                                                   
 static int atoi(const char *name)
 {
@@ -2244,7 +2244,7 @@ static int vfe32_proc_general(
 	case VFE_CMD_START_RECORDING:
 		pr_info("vfe32_proc_general: cmdID = %s\n",
 			vfe32_general_cmd[cmd->id]);
-#ifndef CONFIG_MACH_APQ8064_PALMAN
+#ifndef CONFIG_MACH_APQ8064_AWIFI
 		//                                                                                   
 		CurrentBrightnessValue = Get_LCD_Brightness();
 		if (CurrentBrightnessValue > 140)
@@ -2266,7 +2266,7 @@ static int vfe32_proc_general(
 //                                                                          
 	case VFE_CMD_STOP_RECORDING_DONE:
 		pr_info("vfe32_proc_general: cmdID = VFE_CMD_STOP_RECORDING_DONE\n");
-#ifndef CONFIG_MACH_APQ8064_PALMAN		
+#ifndef CONFIG_MACH_APQ8064_AWIFI		
 		//                                                                                   
 		printk("[LCD_Control] Current LCD Brightness = %d\n",CurrentBrightnessValue);
 		Set_LCD_Brightness(CurrentBrightnessValue);
@@ -6502,7 +6502,7 @@ int msm_vfe_subdev_init(struct v4l2_subdev *sd)
 	vfe32_ctrl->update_rolloff = false;
 	vfe32_ctrl->update_la = false;
 	vfe32_ctrl->update_gamma = false;
-#if defined(LGE_GK_CAMERA_BSP) ||defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(LGE_GK_CAMERA_BSP) ||defined(CONFIG_MACH_APQ8064_AWIFI)
 //	vfe32_ctrl->vfe_sof_count_enable = true;
 	if (vfe32_ctrl->share_ctrl->dual_enabled)
 		vfe32_ctrl->vfe_sof_count_enable = false;

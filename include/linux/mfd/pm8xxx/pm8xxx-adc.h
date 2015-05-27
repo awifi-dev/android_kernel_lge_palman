@@ -218,7 +218,7 @@ enum pm8xxx_adc_scale_fn_type {
 	ADC_SCALE_PA_THERM,
 	ADC_SCALE_PMIC_THERM,
 	ADC_SCALE_XOTHERM,
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 	ADC_SCALE_APQ_THERM,
 #endif
 	ADC_SCALE_NONE,
@@ -383,7 +383,7 @@ int32_t pm8xxx_adc_scale_pa_therm(int32_t adc_code,
 			const struct pm8xxx_adc_properties *adc_prop,
 			const struct pm8xxx_adc_chan_properties *chan_prop,
 			struct pm8xxx_adc_chan_result *chan_rslt);
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 /**
  * pm8xxx_adc_scale_apq_therm() - Scales the pre-calibrated digital output
  *              of an ADC to the ADC reference and compensates for the
@@ -540,7 +540,7 @@ struct pm8xxx_adc_platform_data {
 	struct pm8xxx_adc_amux		*adc_channel;
 	uint32_t			adc_num_board_channel;
 	uint32_t			adc_mpp_base;
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 	bool				apq_therm;
 #endif
 };

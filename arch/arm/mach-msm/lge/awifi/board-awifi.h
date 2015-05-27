@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#ifndef __ARCH_ARM_MACH_MSM_BOARD_APQ8064_PALMAN_H
-#define __ARCH_ARM_MACH_MSM_BOARD_APQ8064_PALMAN_H
+#ifndef __ARCH_ARM_MACH_MSM_BOARD_APQ8064_AWIFI_H
+#define __ARCH_ARM_MACH_MSM_BOARD_APQ8064_AWIFI_H
 
 #include <linux/regulator/msm-gpio-regulator.h>
 #include <linux/mfd/pm8xxx/pm8921.h>
@@ -163,7 +163,7 @@ extern struct msm_rtb_platform_data apq8064_rtb_pdata;
 extern struct msm_cache_dump_platform_data apq8064_cache_dump_pdata;
 void apq8064_init_input(void);
 void __init apq8064_init_misc(void);
-void apq8064_palman_init_input(void);
+void apq8064_awifi_init_input(void);
 
 
 #define I2C_SURF 1

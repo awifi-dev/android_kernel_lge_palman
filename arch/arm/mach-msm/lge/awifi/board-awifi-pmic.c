@@ -30,7 +30,7 @@
 #include <mach/restart.h>
 #include <mach/socinfo.h>
 #include "devices.h"
-#include "board-palman.h"
+#include "board-awifi.h"
 
 struct pm8xxx_gpio_init {
 	unsigned			gpio;
@@ -551,7 +551,7 @@ static struct pc_temp_ocv_lut batt_4600_pc_temp_ocv = {
 	}
 };
 
-struct pm8921_bms_battery_data lge_4600_palman_data = {
+struct pm8921_bms_battery_data lge_4600_awifi_data = {
 	.fcc				= 4600,
 	.fcc_temp_lut			= &batt_4600_fcc_temp,
 	.fcc_sf_lut				= &batt_4600_fcc_sf,
@@ -738,7 +738,7 @@ static int batt_temp_set_state(int health, int i_value)
 	return ret;
 }
 
-static struct batt_temp_pdata palman_batt_temp_pada = {
+static struct batt_temp_pdata awifi_batt_temp_pada = {
 	.set_chg_i_limit = batt_temp_set_current_limit,
 	.get_chg_i_limit = batt_temp_get_current_limit,
 	.set_health_state = batt_temp_set_state,
@@ -757,7 +757,7 @@ struct platform_device batt_temp_ctrl = {
 	.name = "batt_temp_ctrl",
 	.id = -1,
 	.dev = {
-		.platform_data = &palman_batt_temp_pada,
+		.platform_data = &awifi_batt_temp_pada,
 	},
 };
 #endif

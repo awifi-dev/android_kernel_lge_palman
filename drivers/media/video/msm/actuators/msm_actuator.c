@@ -395,7 +395,7 @@ extern uint8_t imx091_af_defocus_data[11];
 #elif defined(CONFIG_S5K4E5YA_EEPROM)
 extern uint8_t s5k4e5ya_afcalib_data[4];
 #define ACT_MIN_MOVE_RANGE	150 // TBD
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 #define ACT_POSTURE_MARGIN   (30) //                                                                            
 //                                                                                                                                
 

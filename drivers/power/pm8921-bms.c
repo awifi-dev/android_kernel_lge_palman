@@ -2990,16 +2990,16 @@ lge:
 #endif
 	return 0;
 lge_4600:
-#ifdef CONFIG_MACH_APQ8064_PALMAN
-	chip->fcc = lge_4600_palman_data.fcc;
-	chip->fcc_temp_lut = lge_4600_palman_data.fcc_temp_lut;
-	chip->fcc_sf_lut = lge_4600_palman_data.fcc_sf_lut;
-	chip->pc_temp_ocv_lut = lge_4600_palman_data.pc_temp_ocv_lut;
-	chip->pc_sf_lut = lge_4600_palman_data.pc_sf_lut;
-	chip->rbatt_sf_lut = lge_4600_palman_data.rbatt_sf_lut;
+#ifdef CONFIG_MACH_APQ8064_AWIFI
+	chip->fcc = lge_4600_awifi_data.fcc;
+	chip->fcc_temp_lut = lge_4600_awifi_data.fcc_temp_lut;
+	chip->fcc_sf_lut = lge_4600_awifi_data.fcc_sf_lut;
+	chip->pc_temp_ocv_lut = lge_4600_awifi_data.pc_temp_ocv_lut;
+	chip->pc_sf_lut = lge_4600_awifi_data.pc_sf_lut;
+	chip->rbatt_sf_lut = lge_4600_awifi_data.rbatt_sf_lut;
 	chip->default_rbatt_mohm
-			= lge_4600_palman_data.default_rbatt_mohm;
-	chip->delta_rbatt_mohm = lge_4600_palman_data.delta_rbatt_mohm;
+			= lge_4600_awifi_data.default_rbatt_mohm;
+	chip->delta_rbatt_mohm = lge_4600_awifi_data.delta_rbatt_mohm;
 #endif
 	return 0;
 }

@@ -24,7 +24,7 @@
 #include <linux/platform_data/hds_max1462x.h>
 #endif
 
-#include "board-palman.h"
+#include "board-awifi.h"
 
 #if defined(CONFIG_SND_SOC_TPA2028D) || defined (CONFIG_SND_SOC_TPA2028D_DUAL_SPEAKER)
 #define TPA2028D_ADDRESS (0xB0>>1)

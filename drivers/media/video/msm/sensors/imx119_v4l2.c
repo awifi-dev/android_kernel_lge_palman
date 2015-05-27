@@ -14,8 +14,8 @@
 #include "msm_sensor.h"
 #include "msm_camera_i2c_mux.h"
 #include <linux/mfd/pm8xxx/pm8921.h>
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
-#include "../../../../../arch/arm/mach-msm/lge/palman/board-palman.h"
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
+#include "../../../../../arch/arm/mach-msm/lge/awifi/board-awifi.h"
 #endif
 #include <mach/board_lge.h>
 #define SENSOR_NAME "imx119"
@@ -68,7 +68,7 @@ static struct msm_camera_i2c_reg_conf imx119_groupoff_settings[] = {
 
 static struct msm_camera_i2c_reg_conf imx119_prev_settings[] = {
 /*                                                                       */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 		{0x0101, 0x00}, 
 #else
 		{0x0101, 0x03}, 
@@ -134,7 +134,7 @@ static struct msm_camera_i2c_reg_conf imx119_recommend_settings[] = {
                                   
  */	
 /*                                                                       */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	{0x0101, 0x00}, 
 #else
 	{0x0101, 0x03}, 
@@ -190,7 +190,7 @@ static enum msm_camera_vreg_name_t imx119_veg_seq[] = {
 	CAM_VIO,
 	CAM_VANA,
 /*                                                       */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	CAM_VAF,	// for I2C
 #endif
 /*                                                     */
@@ -296,7 +296,7 @@ static struct msm_sensor_ctrl_t imx119_s_ctrl = {
 	.sensor_v4l2_subdev_ops = &imx119_subdev_ops,
 	.func_tbl = &imx119_func_tbl,
 /*                                                       */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	.clk_rate = MSM_SENSOR_MCLK_24HZ,
 #endif
 /*                                                     */

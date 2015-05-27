@@ -124,7 +124,7 @@
 #define PM8XXX_ADC_HWMON_NAME_LENGTH			32
 #define PM8XXX_ADC_BTM_INTERVAL_MAX			0x14
 #define PM8XXX_ADC_COMPLETION_TIMEOUT			(2 * HZ)
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 /* Ref patch test */
 #define PM8XXX_ADC_APQ_THERM_VREG_UV_MIN               2220000
 #define PM8XXX_ADC_APQ_THERM_VREG_UV_MAX               2220000
@@ -152,7 +152,7 @@ struct pm8xxx_adc {
 	int					msm_suspend_check;
 	struct pm8xxx_adc_amux_properties	*conv;
 	struct pm8xxx_adc_arb_btm_param		batt;
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 	bool					apq_therm;
 #endif
 	struct sensor_device_attribute		sens_attr[0];
@@ -175,7 +175,7 @@ static const struct pm8xxx_adc_scaling_ratio pm8xxx_amux_scaling_ratio[] = {
 
 static struct pm8xxx_adc *pmic_adc;
 static struct regulator *pa_therm;
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 static struct regulator *apq_therm;
 #endif
 
@@ -185,7 +185,7 @@ static struct pm8xxx_adc_scale_fn adc_scale_fn[] = {
 	[ADC_SCALE_PA_THERM] = {pm8xxx_adc_scale_pa_therm},
 	[ADC_SCALE_PMIC_THERM] = {pm8xxx_adc_scale_pmic_therm},
 	[ADC_SCALE_XOTHERM] = {pm8xxx_adc_tdkntcg_therm},
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 	[ADC_SCALE_APQ_THERM] = {pm8xxx_adc_scale_apq_therm},
 #endif
 };
@@ -262,7 +262,7 @@ static int32_t pm8xxx_adc_arb_cntrl(uint32_t arb_cntrl,
 	return 0;
 }
 
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 static int32_t pm8xxx_adc_apqtherm_power(bool on)
 {
 	int rc = 0;
@@ -369,7 +369,7 @@ static int32_t pm8xxx_adc_xo_vote(bool on)
 static int32_t pm8xxx_adc_channel_power_enable(uint32_t channel,
 							bool power_cntrl)
 {
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 	struct pm8xxx_adc *adc_pmic = pmic_adc;
 #endif
 	int rc = 0;
@@ -378,7 +378,7 @@ static int32_t pm8xxx_adc_channel_power_enable(uint32_t channel,
 	case ADC_MPP_1_AMUX8:
 		rc = pm8xxx_adc_patherm_power(power_cntrl);
 		break;
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 	case ADC_MPP_1_AMUX3:
 		if (adc_pmic->apq_therm)
 			rc = pm8xxx_adc_apqtherm_power(power_cntrl);
@@ -1373,7 +1373,7 @@ static int __devinit pm8xxx_adc_probe(struct platform_device *pdev)
 		pr_err("failed to request pa_therm vreg with error %d\n", rc);
 		pa_therm = NULL;
 	}
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 	if (pdata->apq_therm) {
 		apq_therm = regulator_get(adc_pmic->dev, "apq_therm");
 		if (IS_ERR(apq_therm)) {

@@ -571,7 +571,7 @@ int vpe_enable(uint32_t clk_rate, struct msm_cam_media_controller *mctl)
 		goto dst_attach_failed;
 	}
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 	msm_camera_v4l2_get_ion_client(mctl->pcam_ptr);
 #endif
@@ -612,7 +612,7 @@ int vpe_disable(struct msm_cam_media_controller *mctl)
 	iommu_detach_device(mctl->domain, vpe_ctrl->iommu_ctx_dst);
 	iommu_detach_device(mctl->domain, vpe_ctrl->iommu_ctx_src);
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 	msm_camera_v4l2_put_ion_client(mctl->pcam_ptr);
 #endif

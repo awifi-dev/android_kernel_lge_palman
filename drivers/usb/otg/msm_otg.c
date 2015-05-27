@@ -1314,7 +1314,7 @@ static void msm_hsusb_vbus_power(struct msm_otg *motg, bool on)
 	}
 
 	if (motg->pdata->vbus_power) {
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 		if (on) {
 			msm_otg_notify_host_mode(motg, on);
 			ret = motg->pdata->vbus_power(on);

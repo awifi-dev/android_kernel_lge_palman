@@ -21,7 +21,7 @@
 #include <mach/socinfo.h>
 #include <media/msm_camera.h>
 #include "devices.h"
-#include "board-palman.h"
+#include "board-awifi.h"
 #include <mach/board_lge.h>
 
 #ifdef CONFIG_MSM_CAMERA

@@ -803,7 +803,7 @@ int msm_mctl_init(struct msm_cam_v4l2_device *pcam)
 	v4l2_set_subdev_hostdata(pcam->sensor_sdev, pmctl);
 /*                                                                  */
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	pmctl->client = msm_camera_v4l2_get_ion_client(pcam);
 #else		
 	if (!pmctl->client) {
@@ -828,7 +828,7 @@ int msm_mctl_free(struct msm_cam_v4l2_device *pcam)
 		return -EINVAL;
 	}
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
     msm_camera_v4l2_put_ion_client(pcam);
 #endif
@@ -907,7 +907,7 @@ static int msm_mctl_dev_open(struct file *f)
 
 	pcam_inst->vbqueue_initialized = 0;
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 	pmctl->client = msm_camera_v4l2_get_ion_client(pcam);
 #endif
@@ -980,7 +980,7 @@ static int msm_mctl_dev_close(struct file *f)
 	mutex_lock(&pcam->mctl_node.dev_lock);
 	mutex_lock(&pcam_inst->inst_lock);
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 	if (pcam_inst->vbqueue_initialized)
 		vb2_queue_release(&pcam_inst->vid_bufq);	
 #endif
@@ -1000,7 +1000,7 @@ static int msm_mctl_dev_close(struct file *f)
 	pcam->mctl_node.use_count--;
 	pcam->mctl_node.dev_inst_map[pcam_inst->image_mode] = NULL;
 /*                                                                  */
-#if !defined(CONFIG_MACH_APQ8064_PALMAN)
+#if !defined(CONFIG_MACH_APQ8064_AWIFI)
 	if (pcam_inst->vbqueue_initialized)
 		vb2_queue_release(&pcam_inst->vid_bufq);
 #endif
@@ -1017,7 +1017,7 @@ static int msm_mctl_dev_close(struct file *f)
 	kfree(pcam_inst);
 	f->private_data = NULL;
 /*                                                                  */
-#if defined(CONFIG_MACH_APQ8064_PALMAN)
+#if defined(CONFIG_MACH_APQ8064_AWIFI)
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
     msm_camera_v4l2_put_ion_client(pcam);
 #endif

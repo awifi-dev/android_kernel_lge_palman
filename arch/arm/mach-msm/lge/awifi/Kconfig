@@ -2,9 +2,9 @@ config BOARD_HEADER_FILE
 	string "LGE board specific header file name"
 	default ""
 
-config MACH_APQ8064_PALMAN
+config MACH_APQ8064_AWIFI
 	depends on ARCH_APQ8064
 	select MACH_LGE
-	bool "APQ8064 Palman Device"
+	bool "APQ8064 Awifi Device"
 	help
-	  Support for the LGE Palman device.
+	  Support for the LGE Awifi device.

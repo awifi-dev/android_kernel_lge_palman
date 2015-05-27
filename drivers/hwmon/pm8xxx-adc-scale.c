@@ -26,7 +26,7 @@
    their framework which is 0.1DegC. True resolution of 0.1DegC
    will result in the below table size to increase by 10 times */
 static struct pm8xxx_adc_map_pt def_adcmap_btm_threshold[] = {
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 /*
  * board speficic thermistor characteristic
  * Rev.C (Real B): pull-up registor 105.0Kohm, series resistor = 16.0Kohm
@@ -799,7 +799,7 @@ int32_t pm8xxx_adc_scale_pa_therm(int32_t adc_code,
 }
 EXPORT_SYMBOL_GPL(pm8xxx_adc_scale_pa_therm);
 
-#ifdef CONFIG_MACH_APQ8064_PALMAN
+#ifdef CONFIG_MACH_APQ8064_AWIFI
 int32_t pm8xxx_adc_scale_apq_therm(int32_t adc_code,
 		const struct pm8xxx_adc_properties *adc_properties,
 		const struct pm8xxx_adc_chan_properties *chan_properties,

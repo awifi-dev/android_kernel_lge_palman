@@ -3744,7 +3744,7 @@ static void __devinit determine_initial_state(struct pm8921_chg_chip *chip)
 	pm8921_chg_enable_irq(chip, BATT_INSERTED_IRQ);
 	pm8921_chg_enable_irq(chip, DCIN_OV_IRQ);
 	pm8921_chg_enable_irq(chip, DCIN_UV_IRQ);
-#ifndef CONFIG_MACH_APQ8064_PALMAN
+#ifndef CONFIG_MACH_APQ8064_AWIFI
 	pm8921_chg_enable_irq(chip, CHGFAIL_IRQ);
 #endif
 	pm8921_chg_enable_irq(chip, FASTCHG_IRQ);
