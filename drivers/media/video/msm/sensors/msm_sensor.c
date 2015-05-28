@@ -18,7 +18,7 @@
 #include "msm_camera_i2c_mux.h"
 
 /*                                                      */
-#if defined(CONFIG_S5K4E5YA)
+#if defined(CONFIG_S5K4E5YA) || defined (CONFIG_OV5693)
 #include <linux/mfd/pm8xxx/pm8921.h>
 #include "../../../../../arch/arm/mach-msm/lge/awifi/board-awifi.h"
 #include <mach/board_lge.h>
@@ -170,7 +170,14 @@ void msm_sensor_start_stream(struct msm_sensor_ctrl_t *s_ctrl)
 		s_ctrl->msm_sensor_reg->start_stream_conf_size,
 		s_ctrl->msm_sensor_reg->default_data_type);
 	pr_err(" %s : remove delay for shutter lag time \n", __func__ );
+#ifdef CONFIG_OV5693
+    if(!strcmp(s_ctrl->sensordata->sensor_name, "ov5693"))
+        msleep(100); // OV5693 need to skip 3 or more frames for changing sensor mode. (eg. nonZSL capturing)
+    else
+        msleep(50);
+#else
 	msleep(10);
+#endif
 }
 
 void msm_sensor_stop_stream(struct msm_sensor_ctrl_t *s_ctrl)
