@@ -381,13 +381,7 @@ PopulateDot11fDSParams(tpAniSirGlobal     pMac,
                        tDot11fIEDSParams *pDot11f, tANI_U8 channel,
                        tpPESession psessionEntry)
 {
-//    tSirRetStatus       nSirStatus;
-    tANI_U32            nPhyMode;
-
-    // Get PHY mode and based on that add DS Parameter Set IE
-    limGetPhyMode(pMac, &nPhyMode, psessionEntry);
-
-    if ( (WNI_CFG_PHY_MODE_11A != nPhyMode) || pMac->rrm.rrmPEContext.rrmEnable )
+    if ((IS_24G_CH(channel)) || pMac->rrm.rrmPEContext.rrmEnable)
     {
         // .11b/g mode PHY => Include the DS Parameter Set IE:
         pDot11f->curr_channel = channel;
@@ -1487,7 +1481,7 @@ PopulateDot11fTPCReport(tpAniSirGlobal      pMac,
     }
 
     // FramesToDo: This function was "misplaced" in the move to Gen4_TVM...
-    // txPower = halGetRateToPwrValue( pMac, staid, pMac->lim.gLimCurrentChannelId, isBeacon );
+    //                                                                                         
     txPower = 0;
     pDot11f->tx_power    = ( tANI_U8 )txPower;
     pDot11f->link_margin = 0;
@@ -3084,6 +3078,17 @@ sirConvertBeaconFrame2Struct(tpAniSirGlobal       pMac,
         palCopyMemory( pMac->hHdd, (tANI_U8 *)&(pBeaconStruct->mdie[0]), (tANI_U8 *)&(pBeacon->MobilityDomain.MDID), sizeof(tANI_U16) );
         pBeaconStruct->mdie[2] = ((pBeacon->MobilityDomain.overDSCap << 0) | (pBeacon->MobilityDomain.resourceReqCap << 1));
 
+    }
+#endif
+
+#ifdef FEATURE_WLAN_CCX
+    if (pBeacon->CCXTxmitPower.present)
+    {
+        //CCX Tx Power
+        pBeaconStruct->ccxTxPwr.present = 1;
+        palCopyMemory( pMac->hHdd, &pBeaconStruct->ccxTxPwr,
+                                   &pBeacon->CCXTxmitPower,
+                                   sizeof(tDot11fIECCXTxmitPower));
     }
 #endif
 

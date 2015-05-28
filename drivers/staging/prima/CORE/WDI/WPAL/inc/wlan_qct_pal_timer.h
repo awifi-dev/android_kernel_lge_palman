@@ -122,12 +122,12 @@ wpt_status wpalTimerStop(wpt_timer * pTimer);
 ---------------------------------------------------------------------------*/
 WPAL_TIMER_STATE wpalTimerGetCurStatus(wpt_timer * pTimer);
 
-/*---------------------------------------------------------------------------
-    wpalGetSystemTime - Get the system time in milliseconds
+/*                                                                           
+                                                           
 
-    return
-        current time in milliseconds
----------------------------------------------------------------------------*/
+          
+                                    
+                                                                           */
 wpt_uint32 wpalGetSystemTime(void);
 
 /*---------------------------------------------------------------------------
@@ -139,6 +139,13 @@ wpt_uint32 wpalGetSystemTime(void);
 ---------------------------------------------------------------------------*/
 wpt_status wpalSleep(wpt_uint32 timeout);
 
-
+/*---------------------------------------------------------------------------
+    wpalBusyWait - Thread busy wait with specified usec
+    Param:
+        usecDelay - amount of time to wait. In unit of micro-seconds.
+    Return:
+        NONE
+---------------------------------------------------------------------------*/
+void wpalBusyWait(wpt_uint32 usecDelay);
 
 #endif // __WLAN_QCT_PAL_TIMER_H

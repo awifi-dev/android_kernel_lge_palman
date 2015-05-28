@@ -115,6 +115,9 @@
 #define WLAN_WAIT_TIME_DISCONNECT  500
 #define WLAN_WAIT_TIME_STATS       800
 #define WLAN_WAIT_TIME_POWER       800
+#define WLAN_WAIT_TIME_COUNTRY     1000
+#define WLAN_WAIT_TIME_CHANNEL_UPDATE   600
+
 /* Amount of time to wait for sme close session callback.
    This value should be larger than the timeout used by WDI to wait for
    a response from WCNSS */
@@ -145,6 +148,7 @@
 #define MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
 /** Mac Address string **/
 #define MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"
+#define MAC_ADDRESS_STR_LEN 18 /* Including null terminator */
 #define MAX_GENIE_LEN 255
 
 #define WLAN_CHIP_VERSION   "WCNSS"
@@ -234,6 +238,8 @@ typedef struct hdd_tx_rx_stats_s
    __u32    rxDropped;
    __u32    rxDelivered;
    __u32    rxRefused;
+   __u32    pkt_tx_count; //TX pkt Counter used for dynamic splitscan
+   __u32    pkt_rx_count; //RX pkt Counter used for dynamic splitscan
 } hdd_tx_rx_stats_t;
 
 typedef struct hdd_chip_reset_stats_s
@@ -651,6 +657,10 @@ typedef struct hdd_scaninfo_s
    /* The scan pending  */
    v_U32_t mScanPending;
 
+  /* Counter for mScanPending so that the scan pending
+     error log is not printed for more than 5 times    */
+   v_U32_t mScanPendingCounter;
+
    /* Client Wait Scan Result */
    v_U32_t waitScanResult;
 
@@ -786,7 +796,7 @@ struct hdd_adapter_s
  */
     /** Multiple station supports */
    /** Per-station structure */
-   spinlock_t staInfo_lock; //To protect access to station Info  
+   spinlock_t staInfo_lock; //To protect access to station Info
    hdd_station_info_t aStaInfo[WLAN_MAX_STA_COUNT];
    //v_U8_t uNumActiveStation;
 
@@ -817,6 +827,10 @@ struct hdd_adapter_s
    //Magic cookie for adapter sanity verification
    v_U32_t magic;
    v_BOOL_t higherDtimTransition;
+   /* Flag to ensure PSB is configured through framework */
+   v_U8_t psbChanged;
+   /* UAPSD psb value configured through framework */
+   v_U8_t configuredPsb;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
@@ -912,6 +926,11 @@ struct hdd_context_s
    /* Completion  variable to wlan_hdd_get_crda_regd_entry  */
    struct completion driver_crda_req;
 
+   /* Completion variable to indicate updation of channel */
+   struct completion wiphy_channel_update_event;
+
+   v_BOOL_t nEnableStrictRegulatoryForFCC;
+
    v_BOOL_t isWlanSuspended;
 
    v_BOOL_t isTxThreadSuspended;
@@ -1006,24 +1025,32 @@ struct hdd_context_s
 
     hdd_traffic_monitor_t traffic_monitor;
 
+    /* MC/BC Filter state variable
+     * This always contains the value that is currently
+     * configured
+     * */
+    v_U8_t configuredMcastBcastFilter;
+
+    v_U8_t sus_res_mcastbcast_filter;
+
+    v_BOOL_t sus_res_mcastbcast_filter_valid;
+
     /* Use below lock to protect access to isSchedScanUpdatePending
      * since it will be accessed in two different contexts.
      */
     spinlock_t schedScan_lock;
-
-    v_U8_t sus_res_mcastbcast_filter;
 
     // Flag keeps track of wiphy suspend/resume
     v_BOOL_t isWiphySuspended;
 
     // Indicates about pending sched_scan results
     v_BOOL_t isSchedScanUpdatePending;
-
-    /* MC/BC Filter state variable
-     * This always contains the value that is currently
-     * configured
-     * */
-    v_U8_t configuredMcastBcastFilter;
+    /*
+    * TX_rx_pkt_count_timer
+    */
+    vos_timer_t    tx_rx_trafficTmr;
+    v_U8_t         drvr_miracast;
+    v_U8_t         issplitscan_enabled;
 };
 
 
@@ -1101,9 +1128,10 @@ void hdd_exchange_version_and_caps(hdd_context_t *pHddCtx);
 void hdd_set_pwrparams(hdd_context_t *pHddCtx);
 void hdd_reset_pwrparams(hdd_context_t *pHddCtx);
 int wlan_hdd_validate_context(hdd_context_t *pHddCtx);
+v_BOOL_t hdd_is_valid_mac_address(const tANI_U8* pMacAddr);
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 int wlan_hdd_setIPv6Filter(hdd_context_t *pHddCtx, tANI_U8 filterType, tANI_U8 sessionId);
 #endif
 VOS_STATUS hdd_issta_p2p_clientconnected(hdd_context_t *pHddCtx);
-
+int hdd_wmmps_helper(hdd_adapter_t *pAdapter, tANI_U8 *ptr);
 #endif    // end #if !defined( WLAN_HDD_MAIN_H )

@@ -643,6 +643,7 @@ typedef struct tagCsrConfig
     tANI_U32  nVhtChannelWidth;
     tANI_U8   txBFEnable;
     tANI_U8   txBFCsnValue;
+    tANI_BOOLEAN enableVhtFor24GHz;
 #endif
     tANI_U8   txLdpcEnable;
 
@@ -906,6 +907,8 @@ typedef struct tagCsrRoamSession
     tBkidCandidateInfo BkidCandidateInfo[CSR_MAX_BKID_ALLOWED];
 #endif
     tANI_BOOLEAN fWMMConnection;
+    tANI_BOOLEAN fQOSConnection;
+
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
     //To retry a join later when it fails if so desired
     tPalTimerHandle hTimerJoinRetry;
@@ -1108,10 +1111,6 @@ void csrScanSuspendIMPS( tpAniSirGlobal pMac );
 void csrScanResumeIMPS( tpAniSirGlobal pMac );
 
 eHalStatus csrInitGetChannels(tpAniSirGlobal pMac);
-// Getting the 5GHz Channel list
-eHalStatus csrGet5GChannels(tpAniSirGlobal pMac);
-// Getting the 2.4GHz Channel list
-eHalStatus csrGet24GChannels(tpAniSirGlobal pMac);
 
 eHalStatus csrSetModifyProfileFields(tpAniSirGlobal pMac, tANI_U32 sessionId,
                                      tCsrRoamModifyProfileFields *pModifyProfileFields);

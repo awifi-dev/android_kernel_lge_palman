@@ -3860,7 +3860,11 @@ WLANTL_GetFrames
       WDA_TLI_PROCESS_FRAME_LEN( pTLCb->tlMgmtFrmClient.vosPendingDataBuff,
                           usPktLen, uResLen, uTotalPktLen);
 
-      VOS_ASSERT(usPktLen <= WLANTL_MAX_ALLOWED_LEN);
+      if (usPktLen > WLANTL_MAX_ALLOWED_LEN)
+      {
+          usPktLen = WLANTL_MAX_ALLOWED_LEN;
+          VOS_ASSERT(0);
+      }
 
       if ( ( pTLCb->uResCount > uResLen ) &&
            ( uRemaining > uTotalPktLen ) &&
@@ -3898,7 +3902,11 @@ WLANTL_GetFrames
       WDA_TLI_PROCESS_FRAME_LEN( pTLCb->tlBAPClient.vosPendingDataBuff,
                           usPktLen, uResLen, uTotalPktLen);
 
-      VOS_ASSERT(usPktLen <= WLANTL_MAX_ALLOWED_LEN);
+      if (usPktLen > WLANTL_MAX_ALLOWED_LEN)
+      {
+          usPktLen = WLANTL_MAX_ALLOWED_LEN;
+          VOS_ASSERT(0);
+      }
 
       if ( ( pTLCb->uResCount > (uResLen + WDA_TLI_MIN_RES_MF ) ) &&
            ( uRemaining > uTotalPktLen ))
@@ -3998,7 +4006,11 @@ WLANTL_GetFrames
         {
             WDA_TLI_PROCESS_FRAME_LEN( vosTempBuf, usPktLen, uResLen, uTotalPktLen);
 
-            VOS_ASSERT( usPktLen <= WLANTL_MAX_ALLOWED_LEN);
+            if (usPktLen > WLANTL_MAX_ALLOWED_LEN)
+            {
+                usPktLen = WLANTL_MAX_ALLOWED_LEN;
+                VOS_ASSERT(0);
+            }
 
             TLLOG4(VOS_TRACE( VOS_MODULE_ID_TL, VOS_TRACE_LEVEL_INFO_LOW,
                       "WLAN TL:Resources needed by frame: %d", uResLen));
@@ -4087,8 +4099,8 @@ WLANTL_GetFrames
 
             break;
         }
-        /* ucCurrentAC should have correct AC to be served by calling
-           WLAN_TLGetNextTxIds */
+        /*                                                           
+                               */
         pClientSTA = pTLCb->atlSTAClients[ucSTAId];
         if ( NULL == pClientSTA )
         {
@@ -4146,7 +4158,11 @@ WLANTL_GetFrames
       {
         WDA_TLI_PROCESS_FRAME_LEN( vosTempBuf, usPktLen, uResLen, uTotalPktLen);
 
-        VOS_ASSERT( usPktLen <= WLANTL_MAX_ALLOWED_LEN);
+        if (usPktLen > WLANTL_MAX_ALLOWED_LEN)
+        {
+            usPktLen = WLANTL_MAX_ALLOWED_LEN;
+            VOS_ASSERT(0);
+        }
 
         TLLOG4(VOS_TRACE( VOS_MODULE_ID_TL, VOS_TRACE_LEVEL_INFO_LOW,
                   "WLAN TL:Resources needed by frame: %d", uResLen));
@@ -4240,8 +4256,14 @@ WLANTL_GetFrames
   vos_pkt_walk_packet_chain( vosRoot, &vosDataBuff, 1/*true*/ );
 
   *pvosDataBuff = vosDataBuff;
-  VOS_ASSERT( pbUrgent );
-  *pbUrgent     = pTLCb->bUrgent;
+  if (pbUrgent)
+  {
+      *pbUrgent     = pTLCb->bUrgent;
+  }
+  else
+  {
+      VOS_ASSERT( pbUrgent );
+  }
   return ucResult;
 }/* WLANTL_GetFrames */
 
@@ -4920,9 +4942,6 @@ WLANTL_ProcessBAPFrame
     }
 
     /* Send packet to BAP client*/
-
-    VOS_ASSERT(pTLCb->tlBAPClient.pfnTlBAPRx != NULL);
-
     if ( VOS_STATUS_SUCCESS != WDA_DS_TrimRxPacketInfo( vosTempBuff ) )
     {
       TLLOGW(VOS_TRACE( VOS_MODULE_ID_TL, VOS_TRACE_LEVEL_WARN,
@@ -4952,6 +4971,10 @@ WLANTL_ProcessBAPFrame
         pTLCb->tlBAPClient.pfnTlBAPRx( vos_get_global_context(VOS_MODULE_ID_TL,pTLCb),
                                        vosTempBuff,
                                        (WLANTL_BAPFrameEnumType)usType );
+    else
+    {
+        VOS_ASSERT(0);
+    }
 
     return VOS_TRUE;
   }
@@ -7575,15 +7598,16 @@ WLANTL_FwdPktToHDD
       wRxMetaInfo.ucUP = (v_U8_t)(STAMetaInfo & WLANTL_AC_MASK);
       wRxMetaInfo.ucDesSTAId = ucDesSTAId;
      
-   vosStatus = pClientSTA->pfnSTARx( pvosGCtx, vosDataBuff, ucDesSTAId,
+      vosStatus = pClientSTA->pfnSTARx( pvosGCtx, vosDataBuff, ucDesSTAId,
                                             &wRxMetaInfo );
-  if ( VOS_STATUS_SUCCESS != vosStatus )
-  {
-     TLLOGE(VOS_TRACE( VOS_MODULE_ID_TL, VOS_TRACE_LEVEL_ERROR,
+      if ( VOS_STATUS_SUCCESS != vosStatus )
+      {
+          TLLOGE(VOS_TRACE( VOS_MODULE_ID_TL, VOS_TRACE_LEVEL_ERROR,
                 "WLAN TL: failed to send pkt to HDD \n"));
-     vos_pkt_return_packet(vosDataBuff);
-     return vosStatus;
-   }
+          vos_pkt_return_packet(vosDataBuff);
+
+          return vosStatus;
+      }
       vosDataBuff = vosNextDataBuff;
    }
    return VOS_STATUS_SUCCESS;
@@ -9719,47 +9743,47 @@ WLANTL_PrepareBDHeader
 #endif
 
 //THIS IS A HACK AND NEEDS TO BE FIXED FOR CONCURRENCY
-/*==========================================================================
-  FUNCTION    WLAN_TLGetNextTxIds
+/*                                                                          
+                                 
 
-  DESCRIPTION
-    Gets the next station and next AC in the list that should be served by the TL.
+             
+                                                                                  
 
-    Multiple Station Scheduling and TL queue management. 
+                                                         
 
-    4 HDD BC/MC data packet queue status is specified as Station 0's status. Weights used
-    in WFQ algorith are initialized in WLANTL_OPEN and contained in tlConfigInfo field.
-    Each station has fields of ucPktPending and AC mask to tell whether a AC has traffic
-    or not.
+                                                                                         
+                                                                                       
+                                                                                        
+           
       
-    Stations are served in a round-robin fashion from highest priority to lowest priority.
-    The number of round-robin times of each prioirty equals to the WFQ weights and differetiates
-    the traffic of different prioirty. As such, stations can not provide low priority packets if
-    high priority packets are all served.
+                                                                                          
+                                                                                                
+                                                                                                
+                                         
 
-  DEPENDENCIES
+              
 
-  PARAMETERS
+            
 
-   IN
-   pvosGCtx:     pointer to the global vos context; a handle to TL's
-                 control block can be extracted from its context
+     
+                                                                    
+                                                                
 
-   OUT
-   pucSTAId:    Station ID
+      
+                          
 
-  RETURN VALUE
-    The result code associated with performing the operation
+              
+                                                            
 
-    VOS_STATUS_SUCCESS:   Everything is good
+                                            
 
-  SIDE EFFECTS
+              
    
-   TL context contains currently served station ID in ucCurrentSTA field, currently served AC
-   in uCurServedAC field, and unserved weights of current AC in uCurLeftWeight.
-   When existing from the function, these three fields are changed accordingly.
+                                                                                             
+                                                                               
+                                                                               
 
-============================================================================*/
+                                                                            */
 VOS_STATUS
 WLAN_TLAPGetNextTxIds
 (
@@ -9927,32 +9951,32 @@ WLAN_TLAPGetNextTxIds
 }
 
 
-/*==========================================================================
-  FUNCTION    WLAN_TLGetNextTxIds
+/*                                                                          
+                                 
 
-  DESCRIPTION
-    Gets the next station and next AC in the list
+             
+                                                 
 
-  DEPENDENCIES
+              
 
-  PARAMETERS
+            
 
-   IN
-   pvosGCtx:     pointer to the global vos context; a handle to TL's
-                 control block can be extracted from its context
+     
+                                                                    
+                                                                
 
-   OUT
-   pucSTAId:    Station ID
+      
+                          
 
 
-  RETURN VALUE
-    The result code associated with performing the operation
+              
+                                                            
 
-    VOS_STATUS_SUCCESS:   Everything is good :)
+                                               
 
-  SIDE EFFECTS
+              
 
-============================================================================*/
+                                                                            */
 VOS_STATUS
 WLAN_TLGetNextTxIds
 (
@@ -10125,7 +10149,7 @@ WLAN_TLGetNextTxIds
              pTLCb->atlSTAClients[*pucSTAId]->ucCurrentWeight));
 
   return VOS_STATUS_SUCCESS;
-}/* WLAN_TLGetNextTxIds */
+}/*                     */
 
 
 
@@ -10174,7 +10198,7 @@ WLANTL_MgmtFrmRxDefaultCb
 
 /*==========================================================================
 
-  FUNCTION    WLANTL_STARxDefaultCb
+  FUNCTION   WLANTL_BAPRxDefaultCb
 
   DESCRIPTION
     Default BAP rx callback: asserts all the time. If this function gets
@@ -10238,7 +10262,7 @@ WLANTL_STARxDefaultCb
        "WLAN TL: No registered STA client rx cb for STAID: %d dropping pkt",
                ucSTAId));
   vos_pkt_return_packet(vosDataBuff);
-  return VOS_STATUS_E_FAILURE;
+  return VOS_STATUS_SUCCESS;
 }/*WLANTL_MgmtFrmRxDefaultCb*/
 
 
