@@ -60,7 +60,11 @@ obj-$(CONFIG_TSIF_CHRDEV) += tsif_chrdev.o
 obj-$(CONFIG_TSPP) += tspp.o
 obj-$(CONFIG_HAPTIC_ISA1200)		+= isa1200.o
 obj-$(CONFIG_PMIC8058_PWM) += pmic8058-pwm.o
+ifeq ($(CONFIG_MACH_APQ8064_AWIFI),y)
+obj-$(CONFIG_PMIC8XXX_VIBRATOR) += pm8xxx-vibrator_lge.o
+else
 obj-$(CONFIG_PMIC8XXX_VIBRATOR) += pm8xxx-vibrator.o
+endif
 obj-$(CONFIG_ANDROID_IRRC)	+= android_irrc.o
 obj-$(CONFIG_PMIC8XXX_NFC) += pm8xxx-nfc.o
 obj-$(CONFIG_PMIC8XXX_UPL) += pm8xxx-upl.o
