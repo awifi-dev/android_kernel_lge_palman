@@ -35,7 +35,11 @@
 #include "msm_watchdog.h"
 #include "timer.h"
 
-extern unsigned get_cable_status(void);
+#include <mach/board_lge.h>
+
+#ifdef CONFIG_LGE_PM
+#include <linux/mfd/pm8xxx/pm8921-charger.h>
+#endif
 
 #define WDT0_RST	0x38
 #define WDT0_EN		0x40
@@ -68,7 +72,7 @@ static void *dload_mode_addr;
 
 /* Download mode master kill-switch */
 static int dload_set(const char *val, struct kernel_param *kp);
-static int download_mode = 0;
+static int download_mode = 1;
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
 
@@ -136,20 +140,11 @@ EXPORT_SYMBOL(msm_set_restart_mode);
 
 static void __msm_power_off(int lower_pshold)
 {
-	int reset = 0;
-
 	printk(KERN_CRIT "Powering off the SoC\n");
 #ifdef CONFIG_MSM_DLOAD_MODE
 	set_dload_mode(0);
 #endif
-	if (machine_is_apq8064_flo() || machine_is_apq8064_deb()) {
-		if (get_cable_status()) {
-			printk(KERN_CRIT "Go to charger mode!");
-			reset = 1;
-			 __raw_writel(0x776655FE, restart_reason);
-		}
-	}
-	 pm8xxx_reset_pwr_off(reset);
+	pm8xxx_reset_pwr_off(0);
 
 	if (lower_pshold) {
 		__raw_writel(0, PSHOLD_CTL_SU);
@@ -241,11 +236,13 @@ void set_kernel_crash_magic_number(void)
 	else
 		__raw_writel(restart_mode, restart_reason);
 }
-#endif /* CONFIG_LGE_CRASH_HANDLER */
+#endif /*                          */
 
 void msm_restart(char mode, const char *cmd)
 {
+
 #ifdef CONFIG_MSM_DLOAD_MODE
+
 	/* This looks like a normal reboot at this point. */
 	set_dload_mode(0);
 
@@ -275,11 +272,30 @@ void msm_restart(char mode, const char *cmd)
 			__raw_writel(0x77665500, restart_reason);
 		} else if (!strncmp(cmd, "recovery", 8)) {
 			__raw_writel(0x77665502, restart_reason);
+			/* FOTA : Add restart reason */
+		} else if (!strncmp(cmd, "fota", 4)) {
+			__raw_writel(0x77665566, restart_reason);
+			/* PC Sync B&R : Add restart reason */
+//		} else if (!strncmp(cmd, "--bnr_recovery", 14)) {
+//			__raw_writel(0x77665555, restart_reason);
 		} else if (!strncmp(cmd, "oem-", 4)) {
 			unsigned long code;
 			code = simple_strtoul(cmd + 4, NULL, 16) & 0xff;
 			__raw_writel(0x6f656d00 | code, restart_reason);
-		} else {
+		}
+#ifdef CONFIG_RTC_PWROFF_ALARM
+		else if(!strncmp(cmd, "rtcboot", 7)){
+			writel(0x6d63c423, restart_reason);
+		}
+#endif
+#ifdef CONFIG_LGE_FOTA_SILENT_RESET
+		else if (!strncmp(cmd, "FOTA LCD off", 12)) {
+			__raw_writel(0x77665560, restart_reason);
+		} else if (!strncmp(cmd, "FOTA LCD OUT off", 16)) {
+			__raw_writel(0x77665561, restart_reason);
+		}
+#endif
+		else {
 			__raw_writel(0x77665501, restart_reason);
 		}
 	} else {
@@ -289,21 +305,30 @@ void msm_restart(char mode, const char *cmd)
 	if (in_panic == 1)
 		set_kernel_crash_magic_number();
 reset:
-#else
-	if (in_panic == 1) {
-		__raw_writel(0x6d630100, restart_reason);
-		pr_notice("in panic\n");
-		mdelay(500);
-	}
-#endif /* CONFIG_LGE_CRASH_HANDLER */
+#endif /*                          */
 
 	__raw_writel(0, msm_tmr0_base + WDT0_EN);
+#ifndef CONFIG_LGE_BITE_RESET
 	if (!(machine_is_msm8x60_fusion() || machine_is_msm8x60_fusn_ffa())) {
 		mb();
 		__raw_writel(0, PSHOLD_CTL_SU); /* Actually reset the chip */
 		mdelay(5000);
 		pr_notice("PS_HOLD didn't work, falling back to watchdog\n");
 	}
+#endif
+#ifdef CONFIG_LGE_PM
+//donghyuk.yang
+#if !defined(CONFIG_MACH_APQ8064_ALTEV)
+        pr_notice("check battery fet\n");
+        if(pm8921_chg_batfet_get_ext() > 0 && lge_get_factory_boot())
+        {
+               /* return control to PMIC FSM */
+                pm8921_chg_batfet_set_ext(0);
+                pr_notice("wait release fet\n");
+                mdelay(7000);
+        }
+#endif
+#endif
 
 	__raw_writel(1, msm_tmr0_base + WDT0_RST);
 	__raw_writel(5*0x31F3, msm_tmr0_base + WDT0_BARK_TIME);

@@ -826,6 +826,8 @@ int smd_pkt_open(struct inode *inode, struct file *file)
 	}
 	D_STATUS("Begin %s on smd_pkt_dev id:%d\n", __func__, smd_pkt_devp->i);
 
+	file->private_data = smd_pkt_devp;
+
 	mutex_lock(&smd_pkt_devp->ch_lock);
 	if (smd_pkt_devp->ch == 0) {
 		wake_lock_init(&smd_pkt_devp->pa_wake_lock, WAKE_LOCK_SUSPEND,
@@ -940,8 +942,6 @@ release_pd:
 		platform_driver_unregister(&smd_pkt_devp->driver);
 		smd_pkt_devp->driver.probe = NULL;
 	}
-	else if (r == 0)
-		file->private_data = smd_pkt_devp;
 out:
 	if (!smd_pkt_devp->ch)
 		wake_lock_destroy(&smd_pkt_devp->pa_wake_lock);
@@ -1028,6 +1028,9 @@ static int __init smd_pkt_init(void)
 	}
 
 	for (i = 0; i < NUM_SMD_PKT_PORTS; ++i) {
+#if defined (CONFIG_BCMDHD) && !defined (CONFIG_WCNSS_CORE) && defined (CONFIG_MACH_APQ8064_GVAR_CMCC) //for wifi changed by wo0ngs,  2013-04-26
+		if (smd_ch_edge[i]  != SMD_APPS_WCNSS) {
+#endif			
 		smd_pkt_devp[i] = kzalloc(sizeof(struct smd_pkt_dev),
 					 GFP_KERNEL);
 		if (IS_ERR(smd_pkt_devp[i])) {
@@ -1084,8 +1087,13 @@ static int __init smd_pkt_init(void)
 					&dev_attr_open_timeout))
 			pr_err("%s: unable to create device attr for"
 			       " smd_pkt_dev id:%d\n", __func__, i);
+#if defined (CONFIG_BCMDHD) && !defined (CONFIG_WCNSS_CORE) && defined (CONFIG_MACH_APQ8064_GVAR_CMCC) //for wifi changed by wo0ngs,  2013-04-26
 	}
-
+	else {
+		pr_err("%s: brcm except  SMD_APPS_WCNSS cdev id: %d\n", __func__, i);
+	}
+#endif
+	}
 	INIT_DELAYED_WORK(&loopback_work, loopback_probe_worker);
 
 	smd_pkt_ilctxt = ipc_log_context_create(SMD_PKT_IPC_LOG_PAGE_CNT,

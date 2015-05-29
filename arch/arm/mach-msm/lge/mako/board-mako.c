@@ -1,5 +1,5 @@
 /* Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
- * Copyright (c) 2012,2013 LGE Inc.
+ * Copyright (c) 2012, LGE Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -28,7 +28,7 @@
 #include <linux/spi/spi.h>
 #include <linux/dma-mapping.h>
 #include <linux/platform_data/qcom_crypto_device.h>
-#include <linux/msm_ion.h>
+#include <linux/ion.h>
 #include <linux/memory.h>
 #include <linux/memblock.h>
 #include <linux/msm_thermal.h>
@@ -66,6 +66,9 @@
 #include <mach/msm_xo.h>
 #ifdef CONFIG_MSM_RTB
 #include <mach/msm_rtb.h>
+#endif
+#ifdef CONFIG_SND_SOC_CS8427
+#include <sound/cs8427.h>
 #endif
 #ifdef CONFIG_IR_GPIO_CIR
 #include <media/gpio-ir-recv.h>
@@ -343,8 +346,9 @@ static struct ion_co_heap_pdata fw_co_apq8064_ion_pdata = {
  * to each other.
  * Don't swap the order unless you know what you are doing!
  */
-
-static struct ion_platform_heap ion_heaps[] = {
+static struct ion_platform_data apq8064_ion_pdata = {
+	.nr = MSM_ION_HEAP_NUM,
+	.heaps = {
 		{
 			.id	= ION_SYSTEM_HEAP_ID,
 			.type	= ION_HEAP_TYPE_SYSTEM,
@@ -407,11 +411,7 @@ static struct ion_platform_heap ion_heaps[] = {
 			.extra_data = (void *) &co_apq8064_ion_pdata,
 		},
 #endif
-};
-
-static struct ion_platform_data apq8064_ion_pdata = {
-	.nr = MSM_ION_HEAP_NUM,
-	.heaps = ion_heaps,
+	}
 };
 
 static struct platform_device apq8064_ion_dev = {
@@ -487,7 +487,7 @@ static void __init reserve_ion_memory(void)
 		const struct ion_platform_heap *heap =
 			&(apq8064_ion_pdata.heaps[i]);
 
-		if ((int)heap->type == (int)ION_HEAP_TYPE_CP && heap->extra_data) {
+		if (heap->type == ION_HEAP_TYPE_CP && heap->extra_data) {
 			struct ion_cp_heap_pdata *data = heap->extra_data;
 
 			reusable_count += (data->reusable) ? 1 : 0;
@@ -509,17 +509,21 @@ static void __init reserve_ion_memory(void)
 			int fixed_position = NOT_FIXED;
 			int mem_is_fmem = 0;
 
-			if ((int)heap->type == ION_HEAP_TYPE_CP) {
+			switch (heap->type) {
+			case ION_HEAP_TYPE_CP:
 				mem_is_fmem = ((struct ion_cp_heap_pdata *)
 					heap->extra_data)->mem_is_fmem;
 				fixed_position = ((struct ion_cp_heap_pdata *)
 					heap->extra_data)->fixed_position;
-			}
-			else if (heap->type == ION_HEAP_TYPE_CARVEOUT) {
+				break;
+			case ION_HEAP_TYPE_CARVEOUT:
 				mem_is_fmem = ((struct ion_co_heap_pdata *)
 					heap->extra_data)->mem_is_fmem;
 				fixed_position = ((struct ion_co_heap_pdata *)
 					heap->extra_data)->fixed_position;
+				break;
+			default:
+				break;
 			}
 
 			if (fixed_position != NOT_FIXED)
@@ -566,14 +570,18 @@ static void __init reserve_ion_memory(void)
 			int fixed_position = NOT_FIXED;
 			struct ion_cp_heap_pdata *pdata = NULL;
 
-			if ((int)heap->type == ION_HEAP_TYPE_CP) {
-				pdata = (struct ion_cp_heap_pdata *)
-					heap->extra_data;
+			switch (heap->type) {
+			case ION_HEAP_TYPE_CP:
+				pdata =
+				(struct ion_cp_heap_pdata *)heap->extra_data;
 				fixed_position = pdata->fixed_position;
-			}
-			else if (heap->type == ION_HEAP_TYPE_CARVEOUT) {
+				break;
+			case ION_HEAP_TYPE_CARVEOUT:
 				fixed_position = ((struct ion_co_heap_pdata *)
 					heap->extra_data)->fixed_position;
+				break;
+			default:
+				break;
 			}
 
 			switch (fixed_position) {
@@ -735,6 +743,12 @@ static void __init apq8064_early_reserve(void)
 static struct msm_bus_vectors hsic_init_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_SPS,
+		.dst = MSM_BUS_SLAVE_EBI_CH0,
+		.ab = 0,
+		.ib = 0,
+	},
+	{
+		.src = MSM_BUS_MASTER_SPS,
 		.dst = MSM_BUS_SLAVE_SPS,
 		.ab = 0,
 		.ib = 0,
@@ -745,9 +759,15 @@ static struct msm_bus_vectors hsic_init_vectors[] = {
 static struct msm_bus_vectors hsic_max_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_SPS,
+		.dst = MSM_BUS_SLAVE_EBI_CH0,
+		.ab = 60000000,		/* At least 480Mbps on bus. */
+		.ib = 960000000,	/* MAX bursts rate */
+	},
+	{
+		.src = MSM_BUS_MASTER_SPS,
 		.dst = MSM_BUS_SLAVE_SPS,
 		.ab = 0,
-		.ib = 256000000, /*vote for 32Mhz dfab clk rate*/
+		.ib = 512000000, /*vote for 64Mhz dfab clk rate*/
 	},
 };
 
@@ -996,6 +1016,99 @@ static struct slim_device apq8064_slim_tabla20 = {
 	.dev = {
 		.platform_data = &apq8064_tabla20_platform_data,
 	},
+};
+
+#ifdef CONFIG_SND_SOC_CS8427
+/* enable the level shifter for cs8427 to make sure the I2C
+ * clock is running at 100KHz and voltage levels are at 3.3
+ * and 5 volts
+ */
+static int enable_100KHz_ls(int enable)
+{
+	int ret = 0;
+	if (enable) {
+		ret = gpio_request(SX150X_GPIO(1, 10),
+					"cs8427_100KHZ_ENABLE");
+		if (ret) {
+			pr_err("%s: Failed to request gpio %d\n", __func__,
+				SX150X_GPIO(1, 10));
+			return ret;
+		}
+		gpio_direction_output(SX150X_GPIO(1, 10), 1);
+	} else
+		gpio_free(SX150X_GPIO(1, 10));
+	return ret;
+}
+
+static struct cs8427_platform_data cs8427_i2c_platform_data = {
+	.irq = SX150X_GPIO(1, 4),
+	.reset_gpio = SX150X_GPIO(1, 6),
+	.enable = enable_100KHz_ls,
+};
+
+static struct i2c_board_info cs8427_device_info[] __initdata = {
+	{
+		I2C_BOARD_INFO("cs8427", CS8427_ADDR4),
+		.platform_data = &cs8427_i2c_platform_data,
+	},
+};
+#endif
+
+/* configuration data for mxt1386e using V2.1 firmware */
+static const u8 mxt1386e_config_data_v2_1[] = {
+	/* T6 Object */
+	0, 0, 0, 0, 0, 0,
+	/* T38 Object */
+	14, 2, 0, 24, 5, 12, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0,
+	/* T7 Object */
+	100, 10, 50,
+	/* T8 Object */
+	25, 0, 20, 20, 0, 0, 0, 0, 0, 0,
+	/* T9 Object */
+	139, 0, 0, 26, 42, 0, 32, 80, 2, 5,
+	0, 5, 5, 0, 10, 30, 10, 10, 255, 2,
+	85, 5, 0, 5, 9, 5, 12, 35, 70, 40,
+	20, 5, 0, 0, 0,
+	/* T18 Object */
+	0, 0,
+	/* T24 Object */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0,
+	/* T25 Object */
+	1, 0, 60, 115, 156, 99,
+	/* T27 Object */
+	0, 0, 0, 0, 0, 0, 0,
+	/* T40 Object */
+	0, 0, 0, 0, 0,
+	/* T42 Object */
+	0, 0, 255, 0, 255, 0, 0, 0, 0, 0,
+	/* T43 Object */
+	0, 0, 0, 0, 0, 0, 0, 64, 0, 8,
+	16,
+	/* T46 Object */
+	68, 0, 16, 16, 0, 0, 0, 0, 0,
+	/* T47 Object */
+	0, 0, 0, 0, 0, 0, 3, 64, 66, 0,
+	/* T48 Object */
+	1, 64, 64, 0, 0, 0, 0, 0, 0, 0,
+	32, 40, 0, 10, 10, 0, 0, 100, 10, 90,
+	0, 0, 0, 0, 0, 0, 0, 10, 1, 10,
+	52, 10, 12, 0, 33, 0, 1, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0,
+	/* T56 Object */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0,
 };
 
 #define MSM_WCNSS_PHYS	0x03000000
@@ -1736,6 +1849,7 @@ static struct platform_device *common_devices[] __initdata = {
 	&msm_pil_vidc,
 	&msm_gss,
 	&apq8064_rtb_device,
+	&apq8064_cpu_idle_device,
 	&apq8064_device_cache_erp,
 	&msm8960_device_ebi1_ch0_erp,
 	&msm8960_device_ebi1_ch1_erp,
@@ -1754,7 +1868,6 @@ static struct platform_device *common_devices[] __initdata = {
 	&apq8064_iommu_domain_device,
 	&msm_tsens_device,
 	&apq8064_cache_dump_device,
-	&adsp_loader_device,
 };
 
 static struct platform_device *cdp_devices[] __initdata = {
@@ -1848,7 +1961,7 @@ static void __init apq8064_init_dsps(void)
 
 static void __init register_i2c_devices(void)
 {
-#ifdef CONFIG_MSMB_CAMERA
+#ifdef CONFIG_MSM_CAMERA
 	struct i2c_registry apq8064_camera_i2c_devices = {
 		I2C_FFA,
 		APQ_8064_GSBI4_QUP_I2C_BUS_ID,
@@ -1865,7 +1978,7 @@ static void __init register_i2c_devices(void)
 #endif
 
 
-#ifdef CONFIG_MSMB_CAMERA
+#ifdef CONFIG_MSM_CAMERA
 	i2c_register_board_info(apq8064_camera_i2c_devices.bus,
 		apq8064_camera_i2c_devices.info,
 		apq8064_camera_i2c_devices.len);
@@ -1879,8 +1992,6 @@ static void __init register_i2c_devices(void)
 
 static void __init apq8064_common_init(void)
 {
-	struct msm_rpmrs_level rpmrs_level;
-
 	platform_device_register(&msm_gpio_device);
 	msm_tsens_early_init(&apq_tsens_pdata);
 	msm_thermal_init(&msm_thermal_pdata);
@@ -1912,22 +2023,13 @@ static void __init apq8064_common_init(void)
 	platform_add_devices(common_devices, ARRAY_SIZE(common_devices));
 	platform_add_devices(common_not_mpq_devices,
 			ARRAY_SIZE(common_not_mpq_devices));
-	if (!mako_charger_mode) {
-		rpmrs_level =
-			msm_rpmrs_levels[MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT];
-		msm_hsic_pdata.swfi_latency = rpmrs_level.latency_us;
-		rpmrs_level =
-			msm_rpmrs_levels[MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE];
-		apq8064_device_hsic_host.dev.platform_data = &msm_hsic_pdata;
-		device_initialize(&apq8064_device_hsic_host.dev);
-	}
+	apq8064_device_hsic_host.dev.platform_data = &msm_hsic_pdata;
+	device_initialize(&apq8064_device_hsic_host.dev);
 	apq8064_pm8xxx_gpio_mpp_init();
 	apq8064_init_mmc();
 
-	if (!mako_charger_mode) {
-		mdm_8064_device.dev.platform_data = &mdm_platform_data;
-		platform_device_register(&mdm_8064_device);
-	}
+	mdm_8064_device.dev.platform_data = &mdm_platform_data;
+	platform_device_register(&mdm_8064_device);
 
 	platform_device_register(&apq8064_slim_ctrl);
 	slim_register_board_info(apq8064_slim_devices,
@@ -2009,7 +2111,7 @@ static void __init apq8064_mako_init(void)
 	apq8064_init_fb();
 	apq8064_init_gpu();
 	platform_add_devices(apq8064_footswitch, apq8064_num_footswitch);
-#ifdef CONFIG_MSMB_CAMERA
+#ifdef CONFIG_MSM_CAMERA
 	apq8064_init_cam();
 #endif
 	change_memory_power = &apq8064_change_memory_power;
