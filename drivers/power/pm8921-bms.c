@@ -2952,6 +2952,8 @@ static int set_battery_data(struct pm8921_bms_chip *chip)
 		goto palladium;
 	else if (chip->batt_type == BATT_LGE)
 		goto lge;
+	else if (chip->batt_type == BATT_LGE_4600)
+		goto lge_4600;
 
 	battery_id = read_battery_id(chip);
 	if (battery_id < 0) {
@@ -3001,6 +3003,17 @@ lge:
 				= lge_2100_mako_data.default_rbatt_mohm;
 		chip->delta_rbatt_mohm = lge_2100_mako_data.delta_rbatt_mohm;
 		return 0;
+lge_4600:
+	chip->fcc = lge_4600_palman_data.fcc;
+	chip->fcc_temp_lut = lge_4600_palman_data.fcc_temp_lut;
+	chip->fcc_sf_lut = lge_4600_palman_data.fcc_sf_lut;
+	chip->pc_temp_ocv_lut = lge_4600_palman_data.pc_temp_ocv_lut;
+	chip->pc_sf_lut = lge_4600_palman_data.pc_sf_lut;
+	chip->rbatt_sf_lut = lge_4600_palman_data.rbatt_sf_lut;
+	chip->default_rbatt_mohm
+			= lge_4600_palman_data.default_rbatt_mohm;
+	chip->delta_rbatt_mohm = lge_4600_palman_data.delta_rbatt_mohm;
+	return 0;
 }
 
 enum bms_request_operation {

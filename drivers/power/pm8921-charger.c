@@ -28,6 +28,7 @@
 #include <linux/debugfs.h>
 #include <linux/slab.h>
 #include <linux/mfd/pm8xxx/batt-alarm.h>
+#include <linux/ratelimit.h>
 
 #include <mach/msm_xo.h>
 #include <mach/msm_hsusb.h>
@@ -289,6 +290,11 @@ struct pm8921_chg_chip {
 	int				ext_batt_health;
 	int				ext_batt_temp_monitor;
 	int				eoc_check_soc;
+#ifdef CONFIG_PM8921_CHARGER_AICL_SELECTION
+	bool				disable_aicl;
+	unsigned int			*iusbmax_thermal_mitigation;
+	int				iusbmax_thermal_levels;
+#endif
 };
 
 /* user space parameter to limit usb current */
@@ -1202,6 +1208,9 @@ static enum power_supply_property pm_power_props_mains[] = {
 
 static char *pm_power_supplied_to[] = {
 	"battery",
+#ifdef CONFIG_TOUCHSCREEN_CHARGER_NOTIFY
+	"touch",
+#endif
 };
 
 #define USB_WALL_THRESHOLD_MA	500
@@ -1778,7 +1787,11 @@ void pm8921_charger_vbus_draw(unsigned int mA)
 
 	spin_lock_irqsave(&vbus_lock, flags);
 	if (the_chip) {
+#ifdef CONFIG_PM8921_CHARGER_AICL_SELECTION
+		if (mA > USB_WALL_THRESHOLD_MA && !the_chip->disable_aicl)
+#else
 		if (mA > USB_WALL_THRESHOLD_MA)
+#endif
 			__pm8921_charger_vbus_draw(USB_WALL_THRESHOLD_MA);
 		else
 			__pm8921_charger_vbus_draw(mA);
@@ -2556,8 +2569,14 @@ static void vin_collapse_check_worker(struct work_struct *work)
 			struct pm8921_chg_chip, vin_collapse_check_work);
 
 	/* AICL only for wall-chargers */
+#ifdef CONFIG_PM8921_CHARGER_AICL_SELECTION
+	if (is_usb_chg_plugged_in(chip) &&
+		usb_target_ma > USB_WALL_THRESHOLD_MA &&
+		!chip->disable_aicl) {
+#else
 	if (is_usb_chg_plugged_in(chip) &&
 		usb_target_ma > USB_WALL_THRESHOLD_MA) {
+#endif
 		/* decrease usb_target_ma */
 		decrease_usb_ma_value(&usb_target_ma);
 		/* reset here, increase in unplug_check_worker */
@@ -2821,7 +2840,11 @@ static void unplug_check_worker(struct work_struct *work)
 		return;
 	}
 
+#ifdef CONFIG_PM8921_CHARGER_AICL_SELECTION
+	if ((active_path & USB_ACTIVE_BIT) && !chip->disable_aicl) {
+#else
 	if (active_path & USB_ACTIVE_BIT) {
+#endif
 		reg_loop = pm_chg_get_regulation_loop(chip);
 		pr_debug("reg_loop=0x%x usb_ma = %d\n", reg_loop, usb_ma);
 		if ((reg_loop & VIN_ACTIVE_BIT) &&
@@ -2881,7 +2904,12 @@ static void unplug_check_worker(struct work_struct *work)
 		unplug_ovp_fet_open(chip);
 	}
 
+#ifdef CONFIG_PM8921_CHARGER_AICL_SELECTION
+	if (!(reg_loop & VIN_ACTIVE_BIT) && (active_path & USB_ACTIVE_BIT)
+		&& !chip->disable_aicl) {
+#else
 	if (!(reg_loop & VIN_ACTIVE_BIT) && (active_path & USB_ACTIVE_BIT)) {
+#endif
 		/* only increase iusb_max if vin loop not active */
 		if (usb_ma < usb_target_ma) {
 			increase_usb_ma_value(&usb_ma);
@@ -3453,7 +3481,18 @@ DECLARE_WORK(btm_config_work, btm_configure_work);
 
 static void set_appropriate_battery_current(struct pm8921_chg_chip *chip)
 {
+#ifdef CONFIG_PM8921_CHARGER_AICL_SELECTION
+	unsigned int chg_current;
+	if (chip->disable_aicl) {
+		if (usb_target_ma)
+			chg_current = usb_target_ma;
+		else
+			chg_current = USB_WALL_THRESHOLD_MA;
+	} else
+		chg_current = chip->max_bat_chg_current;
+#else
 	unsigned int chg_current = chip->max_bat_chg_current;
+#endif
 
 	if (chip->is_bat_cool)
 		chg_current = min(chg_current, chip->cool_bat_chg_current);
@@ -3464,11 +3503,27 @@ static void set_appropriate_battery_current(struct pm8921_chg_chip *chip)
 	if (chip->ext_warm_i_limit && chip->ext_batt_temp_monitor)
 		chg_current = min(chg_current, chip->ext_warm_i_limit);
 
+#ifdef CONFIG_PM8921_CHARGER_AICL_SELECTION
+	if (chip->disable_aicl) {
+		if (chip->iusbmax_thermal_mitigation)
+			chg_current = min(chg_current,
+				chip->iusbmax_thermal_mitigation[thermal_mitigation]);
+
+		__pm8921_charger_vbus_draw(chg_current);
+	} else {
+		if (thermal_mitigation != 0 && chip->thermal_mitigation)
+			chg_current = min(chg_current,
+					chip->thermal_mitigation[thermal_mitigation]);
+
+		pm_chg_ibatmax_set(the_chip, chg_current);
+	}
+#else
 	if (thermal_mitigation != 0 && chip->thermal_mitigation)
 		chg_current = min(chg_current,
 				chip->thermal_mitigation[thermal_mitigation]);
 
 	pm_chg_ibatmax_set(the_chip, chg_current);
+#endif
 }
 
 #define TEMP_HYSTERISIS_DEGC 2
@@ -3620,11 +3675,27 @@ static int set_therm_mitigation_level(const char *val, struct kernel_param *kp)
 		return -EINVAL;
 	}
 
+#ifdef CONFIG_PM8921_CHARGER_AICL_SELECTION
+	if (chip->disable_aicl) {
+		if (thermal_mitigation < 0
+			|| thermal_mitigation >= chip->iusbmax_thermal_levels) {
+			pr_err("out of bound level selected\n");
+			return -EINVAL;
+		}
+	} else {
+		if (thermal_mitigation < 0
+			|| thermal_mitigation >= chip->thermal_levels) {
+			pr_err("out of bound level selected\n");
+			return -EINVAL;
+		}
+	}
+#else
 	if (thermal_mitigation < 0
 		|| thermal_mitigation >= chip->thermal_levels) {
 		pr_err("out of bound level selected\n");
 		return -EINVAL;
 	}
+#endif
 
 	set_appropriate_battery_current(chip);
 	return ret;
@@ -3690,7 +3761,9 @@ static void __devinit determine_initial_state(struct pm8921_chg_chip *chip)
 	pm8921_chg_enable_irq(chip, BATT_INSERTED_IRQ);
 	pm8921_chg_enable_irq(chip, DCIN_OV_IRQ);
 	pm8921_chg_enable_irq(chip, DCIN_UV_IRQ);
+#ifndef CONFIG_MACH_APQ8064_PALMAN
 	pm8921_chg_enable_irq(chip, CHGFAIL_IRQ);
+#endif
 	pm8921_chg_enable_irq(chip, FASTCHG_IRQ);
 	pm8921_chg_enable_irq(chip, VBATDET_LOW_IRQ);
 
@@ -4582,6 +4655,15 @@ static int __devinit pm8921_charger_probe(struct platform_device *pdev)
 	chip->eoc_check_soc = pdata->eoc_check_soc;
 	if (chip->ext_batt_temp_monitor)
 		chip->ext_batt_health = POWER_SUPPLY_HEALTH_GOOD;
+
+#ifdef CONFIG_PM8921_CHARGER_AICL_SELECTION
+	chip->disable_aicl = pdata->disable_aicl;
+	if (chip->disable_aicl) {
+		chip->iusbmax_thermal_mitigation =
+			pdata->iusbmax_thermal_mitigation;
+		chip->iusbmax_thermal_levels = pdata->iusbmax_thermal_levels;
+	}
+#endif
 
 	rc = pm8921_chg_hw_init(chip);
 	if (rc) {
